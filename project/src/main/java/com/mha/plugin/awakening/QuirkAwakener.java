@@ -108,7 +108,15 @@ public final class QuirkAwakener {
 
             @Override
             public void run() {
-                if (!player.isOnline() || ticks++ > CEREMONY_DURATION) {
+                if (!player.isOnline()) {
+                    // Player left mid-ceremony: abort without assigning so they can
+                    // re-awaken (and actually see the ceremony) on their next join.
+                    quirkManager.setAwakeningInProgress(player.getUniqueId(), false);
+                    activeCeremonies.remove(player.getUniqueId());
+                    cancel();
+                    return;
+                }
+                if (ticks++ > CEREMONY_DURATION) {
                     finishCeremony();
                     cancel();
                     return;

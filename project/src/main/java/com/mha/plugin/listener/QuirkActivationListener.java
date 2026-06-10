@@ -108,10 +108,13 @@ public final class QuirkActivationListener implements Listener {
             return;
         }
 
+        // Record the attempt up-front so every outcome below (success or any error
+        // path) is covered by the throttle and can't spam the action bar tick-by-tick.
+        lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
+
         final Quirk quirk = quirkManager.getPlayerQuirk(player);
         if (quirk == null) {
             TextUtil.actionBar(player, config.getString("messages.prefix", "") + config.getString("messages.no-quirk", "No Quirk assigned"));
-            lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
             return;
         }
 
