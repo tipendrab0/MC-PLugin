@@ -1,0 +1,275 @@
+# MHA Plugin Configuration
+# My Hero Academia Quirk System for Minecraft
+
+# General Settings
+settings:
+  debug: false
+  language: en_US
+  save-interval: 300  # Save player data every 5 minutes (seconds)
+  cooldown-display: true  # Show cooldown on action bar
+  auto-awaken-on-first-join: true  # Auto-assign random Quirk to new players
+
+# Rarity Weights (chance to obtain)
+# Common: 40% | Uncommon: 30% | Rare: 18% | Epic: 9% | Legendary: 3%
+# Rarer quirks have: lower cooldowns, less stamina cost, more damage
+
+# Stamina System Configuration
+stamina:
+  max: 100
+  regen-rate: 3        # Stamina regenerated per second
+  regen-delay: 1000    # Delay after using Quirk before regen starts (ms)
+  exhausted-threshold: 10
+  warning-threshold: 25
+
+# Quirk-specific Configuration
+# Note: Rarity affects power/damage (multiplied by rarity power scaling)
+# COMMON Quirks (40% chance)
+quirks:
+  pop-off:
+    enabled: true
+    cooldown: 2000
+    stamina-cost: 5
+    damage: 2.0
+    slow-duration: 5.0
+    max-balls: 5
+    bounce-multiplier: 1.8
+
+  navel-laser:
+    enabled: true
+    cooldown: 3000
+    stamina-cost: 8
+    damage: 5.0
+    range: 25.0
+    beam-width: 1.0
+    charge-ticks: 20
+
+  engine:
+    enabled: true
+    cooldown: 2000
+    stamina-cost: 10
+    speed:
+      duration-ticks: 200
+      amplifier: 3
+    kick:
+      damage: 6.0
+    dash:
+      distance: 15.0
+
+  frog:
+    enabled: true
+    cooldown: 1500
+    stamina-cost: 5
+    tongue:
+      range: 20.0
+      damage: 3.0
+    camouflage:
+      duration-ticks: 100
+    mobility:
+      jump-multiplier: 2.0
+      swim-duration-ticks: 400
+
+  # UNCOMMON Quirks (30% chance)
+  explosion:
+    enabled: true
+    cooldown: 4000
+    stamina-cost: 12
+    damage: 6.0
+    range: 8.0
+    break-blocks: true
+    launch-multiplier: 1.5
+
+  zero-gravity:
+    enabled: true
+    cooldown: 1500
+    stamina-cost: 6
+    duration: 10000    # How long targets float (ms)
+    max-targets: 3
+    fall-damage-immune: true
+
+  transformation:
+    enabled: true
+    cooldown: 10000
+    stamina-cost: 15
+    duration-ticks: 600
+    health-required: 3.0
+
+  # RARE Quirks (18% chance)
+  ice-fire:
+    enabled: true
+    cooldown: 2500
+    stamina-cost: 8
+    ice:
+      duration: 5000
+      slow-amplifier: 3
+      freeze-radius: 3.0
+    fire:
+      duration: 3000
+      fire-radius: 3.0
+      fire-ticks: 60
+
+  hardening:
+    enabled: true
+    cooldown: 3000
+    stamina-cost: 12
+    armor:
+      duration-ticks: 200
+      bonus-level: 6
+    punch:
+      damage: 6.0
+    red-riot:
+      damage-multiplier: 2.5
+      duration-ticks: 100
+
+  electrification:
+    enabled: true
+    cooldown: 3500
+    stamina-cost: 10
+    shock-damage: 5.0
+    shock-radius: 5.0
+    stun-duration-ticks: 60
+    ultimate-damage: 12.0
+    ultimate-radius: 15.0
+    self-stun-duration-ticks: 100
+
+  wave-motion:
+    enabled: true
+    cooldown: 2000
+    stamina-cost: 10
+    wave-damage: 8.0
+    wave-range: 20.0
+    wave-width: 2.0
+    flight-stamina-drain: 2.0
+
+  # EPIC Quirks (9% chance)
+  cremation:
+    enabled: true
+    cooldown: 3000
+    stamina-cost: 12
+    damage: 10.0
+    range: 15.0
+    fire-ticks: 100
+    pillar-damage: 15.0
+    pillar-radius: 3.0
+    self-damage-percent: 3.0
+
+  creation:
+    enabled: true
+    cooldown: 5000
+    stamina-cost: 20
+    creation-time-ticks: 40
+    stamina-per-item: 15
+
+  permeation:
+    enabled: true
+    cooldown: 2000
+    stamina-cost: 15
+    max-duration-ticks: 100
+    stamina-per-second: 20
+    recovery-delay-ticks: 20
+
+  bloodcurdle:
+    enabled: true
+    cooldown: 4000
+    stamina-cost: 14
+    paralysis-duration-ticks: 100
+    max-range: 30.0
+
+  # LEGENDARY Quirks (3% chance)
+  one-for-all:
+    enabled: true
+    cooldown: 5000
+    stamina-cost: 15
+    smash:
+      damage: 15.0
+      radius: 5.0
+    finger-flick:
+      damage: 10.0
+    mobility:
+      dash-multiplier: 3.0
+    drawback:
+      self-damage-percent: 5.0
+
+  decay:
+    enabled: true
+    cooldown: 3500
+    stamina-cost: 14
+    wither:
+      damage: 4.0
+      duration-ticks: 100
+    blocks:
+      radius: 3
+    entity:
+      radius: 4.0
+    spread:
+      delay-ticks: 5
+      max-radius: 15
+
+  blackwhip:
+    enabled: true
+    cooldown: 2500
+    stamina-cost: 12
+    damage: 18.0
+    range: 25.0
+    grapple-range: 20.0
+    max-targets: 8
+    hold-duration: 3.0
+
+# QTE (Quick Time Event) Settings
+qte:
+  enabled: true
+  duration-ms: 1500
+  min-keys: 3
+  max-keys: 5
+  success-multiplier: 2.0
+  ultimate-stamina-multiplier: 2.0  # Ultimate moves cost 2x stamina on success
+  no-cooldown-on-success: true
+
+# Synergy Combo Settings
+synergy:
+  enabled: true
+  combo-window-ms: 2000
+
+# Reputation System Settings
+reputation:
+  enabled: true
+  hero:
+    points-per-monster-kill:
+      zombie: 1
+      skeleton: 1
+      spider: 1
+      creeper: 2
+      enderman: 2
+      blaze: 3
+      wither-skeleton: 4
+      elder-guardian: 10
+      wither: 25
+      ender-dragon: 50
+      warden: 30
+    thresholds:
+      hero: 50
+      pro-hero: 200
+  villain:
+    points-per-villager-attack: 5
+    points-per-player-kill: 15
+    thresholds:
+      villain: -30
+      supervillain: -100
+
+# Environmental Destruction Settings
+destruction:
+  enabled: true
+  restore-delay-minutes: 5
+  blocks-per-restore-tick: 5
+
+# Player data storage
+players: {}
+reputation: {}
+awakened: {}
+
+# Messages
+messages:
+  prefix: "&6[MHA] &r"
+  no-permission: "&cYou don't have permission."
+  no-quirk: "&cYou don't have a Quirk."
+  cooldown: "&eCooldown: &c%time%s"
+  exhausted: "&cToo exhausted to use your Quirk!"

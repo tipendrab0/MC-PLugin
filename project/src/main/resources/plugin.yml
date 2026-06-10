@@ -1,0 +1,151 @@
+name: MHAPlugin
+version: ${project.version}
+main: com.mha.plugin.MHAPlugin
+api-version: '1.21.11'
+
+softdepend: [Vault]
+
+author: MHA Development Team
+description: Bring the Quirk system from My Hero Academia to Minecraft with advanced features including 19 quirks, rarity system, and awakening ceremony
+
+commands:
+  mha:
+    description: Main command for MHA plugin
+    usage: /<command> [quirks|stamina|reload|setquirk|resetstamina|reputation|awaken|cleanup|protect|help]
+    aliases: [hero, quirk]
+
+permissions:
+  mha.use.quirk:
+    description: Allows players to use their assigned Quirk
+    default: true
+
+  mha.admin:
+    description: Admin permission for all MHA commands
+    default: op
+    children:
+      mha.admin.reload: true
+      mha.admin.setquirk: true
+      mha.admin.resetstamina: true
+      mha.admin.viewothers: true
+      mha.admin.awaken: true
+      mha.admin.cleanup: true
+      mha.admin.protect: true
+      mha.admin.bypass-protection: true
+      mha.admin.bypass-rank: true
+
+  mha.admin.reload:
+    description: Reload the plugin configuration
+    default: op
+
+  mha.admin.setquirk:
+    description: Set a player's Quirk
+    default: op
+
+  mha.admin.resetstamina:
+    description: Reset a player's stamina
+    default: op
+
+  mha.admin.viewothers:
+    description: View other players' Quirk and stamina info
+    default: op
+
+  mha.admin.awaken:
+    description: Trigger Quirk awakening for players
+    default: op
+
+  mha.admin.cleanup:
+    description: Force restore all destroyed blocks
+    default: op
+
+  mha.admin.protect:
+    description: Manage protected areas
+    default: op
+
+  mha.admin.bypass-protection:
+    description: Bypass protected area restrictions
+    default: op
+
+  mha.admin.bypass-rank:
+    description: Bypass hero rank requirements for ultimate moves
+    default: op
+
+  # COMMON Quirk permissions
+  mha.quirk.pop-off:
+    description: Permission to use the Pop Off Quirk
+    default: true
+
+  mha.quirk.navel-laser:
+    description: Permission to use the Navel Laser Quirk
+    default: true
+
+  mha.quirk.engine:
+    description: Permission to use the Engine Quirk
+    default: true
+
+  mha.quirk.frog:
+    description: Permission to use the Frog Quirk
+    default: true
+
+  # UNCOMMON Quirk permissions
+  mha.quirk.explosion:
+    description: Permission to use the Explosion Quirk
+    default: true
+
+  mha.quirk.zero-gravity:
+    description: Permission to use the Zero Gravity Quirk
+    default: true
+
+  mha.quirk.transformation:
+    description: Permission to use the Transformation Quirk
+    default: true
+
+  # RARE Quirk permissions
+  mha.quirk.ice-fire:
+    description: Permission to use the Ice/Fire Quirk
+    default: true
+
+  mha.quirk.hardening:
+    description: Permission to use the Hardening Quirk
+    default: true
+
+  mha.quirk.electrification:
+    description: Permission to use the Electrification Quirk
+    default: true
+
+  mha.quirk.wave-motion:
+    description: Permission to use the Wave Motion Quirk
+    default: true
+
+  # EPIC Quirk permissions
+  mha.quirk.cremation:
+    description: Permission to use the Cremation Quirk
+    default: true
+
+  mha.quirk.creation:
+    description: Permission to use the Creation Quirk
+    default: true
+
+  mha.quirk.permeation:
+    description: Permission to use the Permeation Quirk
+    default: true
+
+  mha.quirk.bloodcurdle:
+    description: Permission to use the Bloodcurdle Quirk
+    default: true
+
+  # LEGENDARY Quirk permissions
+  mha.quirk.one-for-all:
+    description: Permission to use the One For All Quirk
+    default: true
+
+  mha.quirk.decay:
+    description: Permission to use the Decay Quirk
+    default: true
+
+  mha.quirk.blackwhip:
+    description: Permission to use the Blackwhip Quirk
+    default: true
+
+  mha.ultimate:
+    description: Permission to use Ultimate Moves (QTE)
+    default: true
