@@ -1,6 +1,9 @@
 package com.mha.plugin.listener;
 
 import com.mha.plugin.MHAPlugin;
+import com.mha.plugin.gui.AlignmentGui;
+import com.mha.plugin.reputation.ReputationManager;
+import com.mha.plugin.util.GuideBook;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.awakening.QuirkAwakener;
 import com.mha.plugin.quirk.QuirkManager;
@@ -26,21 +29,27 @@ public final class PlayerJoinListener implements Listener {
     private final QuirkManager quirkManager;
     private final QuirkAwakener quirkAwakener;
     private final StaminaManager staminaManager;
+    private final ReputationManager reputationManager;
     private final ConfigManager config;
     private final boolean autoAwaken;
+    private final boolean giveGuide;
+    private final boolean alignmentEnabled;
 
     /**
      * Create the join listener.
      */
     public PlayerJoinListener(final JavaPlugin plugin, final QuirkManager quirkManager,
                                final StaminaManager staminaManager, final ConfigManager config,
-                               final QuirkAwakener quirkAwakener) {
+                               final QuirkAwakener quirkAwakener, final ReputationManager reputationManager) {
         this.plugin = plugin;
         this.quirkManager = quirkManager;
         this.staminaManager = staminaManager;
         this.config = config;
         this.quirkAwakener = quirkAwakener;
+        this.reputationManager = reputationManager;
         this.autoAwaken = config.getBoolean("settings.auto-awaken-on-first-join", true);
+        this.giveGuide = config.getBoolean("guide.give-on-join", true);
+        this.alignmentEnabled = config.getBoolean("alignment.enabled", true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -49,6 +58,26 @@ public final class PlayerJoinListener implements Listener {
 
         // Initialize stamina
         staminaManager.getOrCreateStamina(player);
+
+        // Hand out the guide book once per player.
+        if (giveGuide && !config.getBoolean("guide-given." + player.getUniqueId(), false)) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    GuideBook.give(player);
+                    config.set("guide-given." + player.getUniqueId(), true);
+                    config.saveConfig();
+                }
+            }, 20L);
+        }
+
+        // Let new players pick Hero or Villain.
+        if (alignmentEnabled && !reputationManager.hasChosenAlignment(player)) {
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline() && !reputationManager.hasChosenAlignment(player)) {
+                    AlignmentGui.open(player);
+                }
+            }, 40L);
+        }
 
         // Check if player needs Quirk awakening
         if (autoAwaken && !quirkManager.hasQuirk(player) && !quirkAwakener.hasAwakened(player.getUniqueId())) {

@@ -12,6 +12,7 @@ public final class ReputationState {
     private int villainPoints;
     private volatile boolean dirty;
     private ReputationRank lastRank;
+    private Alignment alignment;
 
     public ReputationState(final UUID playerId) {
         this.playerId = playerId;
@@ -19,6 +20,7 @@ public final class ReputationState {
         this.villainPoints = 0;
         this.dirty = false;
         this.lastRank = ReputationRank.UNKNOWN;
+        this.alignment = Alignment.UNDECIDED;
     }
 
     public UUID getPlayerId() {
@@ -74,5 +76,14 @@ public final class ReputationState {
 
     public void setLastRank(final ReputationRank rank) {
         this.lastRank = rank;
+    }
+
+    public Alignment getAlignment() {
+        return alignment;
+    }
+
+    public void setAlignment(final Alignment alignment) {
+        this.alignment = alignment == null ? Alignment.UNDECIDED : alignment;
+        this.dirty = true;
     }
 }

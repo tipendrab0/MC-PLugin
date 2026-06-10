@@ -10,6 +10,23 @@ settings:
   auto-awaken-on-first-join: true  # Auto-assign random Quirk to new players
   activation-throttle-ms: 250  # Min time between quirk-activation inputs (stops action-bar spam from held clicks)
 
+# Hero/Villain alignment chosen by players on first join
+alignment:
+  enabled: true        # Show the Hero/Villain selection menu to new players
+  force-choice: true   # Re-open the menu if a new player closes it without picking
+
+# Guide handbook given to players
+guide:
+  give-on-join: true   # Give the "Hero Society Handbook" written book on first join
+
+# Bounty system: Heroes earn money/diamonds for defeating Villains
+bounty:
+  enabled: true
+  base-amount: 100.0          # Flat reward for defeating any villain
+  per-villain-point: 10.0     # Extra reward per negative reputation point of the victim
+  max-diamonds: 32            # Cap on diamond fallback when no economy plugin is present
+  hero-points-reward: 10      # Reputation the killer gains for claiming a bounty
+
 # Rarity Weights (chance to obtain)
 # Common: 40% | Uncommon: 30% | Rare: 18% | Epic: 9% | Legendary: 3%
 # Rarer quirks have: lower cooldowns, less stamina cost, more damage
