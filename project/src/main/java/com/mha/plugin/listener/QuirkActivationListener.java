@@ -13,7 +13,6 @@ import com.mha.plugin.quirk.impl.IceFireQuirk;
 import com.mha.plugin.reputation.ReputationManager;
 import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
-import com.mha.plugin.util.TextUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 
 import java.util.Map;
 import java.util.UUID;
@@ -43,7 +43,7 @@ public final class QuirkActivationListener implements Listener {
     private final Map<UUID, Long> lastActivationTime;
     private final Map<UUID, DestructionSession> activeDestructionSessions;
     private final Map<UUID, QTESequence> pendingQTE;
-    private final long cooldownDisplayThreshold;
+    private final long activationThrottleMs;
 
     public QuirkActivationListener(final QuirkManager quirkManager, final StaminaManager staminaManager,
                                     final ConfigManager config) {
@@ -57,11 +57,20 @@ public final class QuirkActivationListener implements Listener {
         this.lastActivationTime = new ConcurrentHashMap<>();
         this.activeDestructionSessions = new ConcurrentHashMap<>();
         this.pendingQTE = new ConcurrentHashMap<>();
-        this.cooldownDisplayThreshold = 50;
+        // Throttle how often interaction feedback (activation / cooldown / stamina
+        // messages) is processed per player. A held or rapidly-repeating click
+        // otherwise fires every tick and spams the action bar.
+        this.activationThrottleMs = Math.max(0L, config.getLong("settings.activation-throttle-ms", 250L));
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerInteract(final PlayerInteractEvent event) {
+        // A single click fires this event once per hand; only handle the main hand
+        // so quirks aren't triggered (and messages aren't shown) twice per click.
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
         final Player player = event.getPlayer();
 
         if (!player.hasPermission("mha.use.quirk")) {
@@ -295,7 +304,7 @@ public final class QuirkActivationListener implements Listener {
      */
     private boolean isRateLimited(final Player player) {
         final Long lastTime = lastActivationTime.get(player.getUniqueId());
-        return lastTime != null && System.currentTimeMillis() - lastTime < cooldownDisplayThreshold;
+        return lastTime != null && System.currentTimeMillis() - lastTime < activationThrottleMs;
     }
 
     @EventHandler

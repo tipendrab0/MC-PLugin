@@ -130,7 +130,9 @@ public final class QuirkAwakener {
 
             private void finishCeremony() {
                 quirkManager.setAwakeningInProgress(player.getUniqueId(), false);
-                quirkManager.assignQuirk(player, quirkType);
+                // Assign silently: the ceremony below already reveals the Quirk in chat,
+                // so the default assignQuirk announcement would duplicate it.
+                quirkManager.assignQuirk(player, quirkType, false);
                 markAwakened(player.getUniqueId());
                 activeCeremonies.remove(player.getUniqueId());
 
