@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,8 +24,8 @@ public final class CreationQuirk extends Quirk {
     private final List<Material> craftableItems;
     private final Random random;
 
-    public CreationQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.CREATION, config, staminaManager);
+    public CreationQuirk(final ConfigManager config) {
+        super(QuirkType.CREATION, config);
 
         this.creationTime = getConfigInt("creation-time-ticks", 40);
         this.staminaPerItem = getConfigInt("stamina-per-item", 15);
@@ -47,11 +46,6 @@ public final class CreationQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
@@ -108,10 +102,6 @@ public final class CreationQuirk extends Quirk {
                         player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, loc.clone().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0);
                         player.getWorld().spawnParticle(Particle.END_ROD, loc.clone().add(0, 1.2, 0), 5, 0.3, 0.3, 0.3, 0);
 
-                        // Drain stamina during creation
-                        if (progress % 10 == 0) {
-                            staminaManager.consumeStamina(player, staminaPerItem / 4);
-                        }
                     },
                     i * 2L
             );
@@ -135,8 +125,6 @@ public final class CreationQuirk extends Quirk {
                 creationTime
         );
 
-        // Consume stamina for creation
-        staminaManager.consumeStamina(player, staminaPerItem);
     }
 
     /**

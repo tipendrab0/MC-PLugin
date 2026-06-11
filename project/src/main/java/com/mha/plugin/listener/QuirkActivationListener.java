@@ -11,7 +11,6 @@ import com.mha.plugin.quirk.QuirkManager;
 import com.mha.plugin.quirk.QuirkType;
 import com.mha.plugin.quirk.impl.IceFireQuirk;
 import com.mha.plugin.reputation.ReputationManager;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -36,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class QuirkActivationListener implements Listener {
 
     private final QuirkManager quirkManager;
-    private final StaminaManager staminaManager;
     private final ConfigManager config;
     private final QTEManager qteManager;
     private final DestructionManager destructionManager;
@@ -47,10 +45,8 @@ public final class QuirkActivationListener implements Listener {
     private final Map<UUID, QTESequence> pendingQTE;
     private final long cooldownDisplayThreshold;
 
-    public QuirkActivationListener(final QuirkManager quirkManager, final StaminaManager staminaManager,
-                                    final ConfigManager config) {
+    public QuirkActivationListener(final QuirkManager quirkManager, final ConfigManager config) {
         this.quirkManager = quirkManager;
-        this.staminaManager = staminaManager;
         this.config = config;
         this.plugin = (MHAPlugin) Bukkit.getPluginManager().getPlugin("MHAPlugin");
         this.qteManager = plugin.getQteManager();
@@ -178,19 +174,6 @@ public final class QuirkActivationListener implements Listener {
             }
         }
 
-        final double ultimateStaminaMultiplier = config.getDouble("qte.ultimate-stamina-multiplier", 2.0);
-        final int ultimateStaminaCost = (int) Math.ceil(quirk.getStaminaCost() * ultimateStaminaMultiplier);
-
-        if (staminaManager.isExhausted(player)) {
-            TextUtil.actionBar(player, config.getString("messages.prefix", "") + config.getString("messages.exhausted", "Exhausted!"));
-            return;
-        }
-
-        if (!staminaManager.canAfford(player, ultimateStaminaCost)) {
-            TextUtil.actionBar(player, config.getString("messages.prefix", "") + "§cNeed " + ultimateStaminaCost + " stamina for Ultimate!");
-            return;
-        }
-
         final long cooldownRemaining = quirk.getCooldownRemaining(player);
         if (cooldownRemaining > 0) {
             final String message = config.getString("messages.cooldown", "Cooldown: %time%s")
@@ -200,7 +183,7 @@ public final class QuirkActivationListener implements Listener {
         }
 
         if (!config.getBoolean("qte.enabled", true)) {
-            activateUltimateDirect(player, quirk, ultimateStaminaCost);
+            activateUltimateDirect(player, quirk);
             lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
             return;
         }
@@ -244,10 +227,6 @@ public final class QuirkActivationListener implements Listener {
                 }
 
                 if (success) {
-                    final int bonusCost = Math.max(0, ultimateStaminaCost - finalQuirk.getStaminaCost());
-                    if (bonusCost > 0) {
-                        staminaManager.consumeStamina(onlinePlayer, bonusCost);
-                    }
                     if (config.getBoolean("qte.no-cooldown-on-success", true)) {
                         finalQuirk.resetCooldown(onlinePlayer);
                     }
@@ -262,7 +241,7 @@ public final class QuirkActivationListener implements Listener {
         lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
     }
 
-    private void activateUltimateDirect(final Player player, final Quirk quirk, final int ultimateStaminaCost) {
+    private void activateUltimateDirect(final Player player, final Quirk quirk) {
         final DestructionSession session = destructionManager.startSession(player);
         activeDestructionSessions.put(player.getUniqueId(), session);
 
@@ -272,10 +251,6 @@ public final class QuirkActivationListener implements Listener {
             quirk.activate(player);
         }
 
-        final int bonusCost = Math.max(0, ultimateStaminaCost - quirk.getStaminaCost());
-        if (bonusCost > 0) {
-            staminaManager.consumeStamina(player, bonusCost);
-        }
         quirk.resetCooldown(player);
         TextUtil.actionBar(player, "§6§lULTIMATE! §e2x power unleashed!");
 
@@ -298,13 +273,6 @@ public final class QuirkActivationListener implements Listener {
 
         if (quirk == null) {
             TextUtil.actionBar(player, config.getString("messages.prefix", "") + config.getString("messages.no-quirk", "No Quirk assigned"));
-            event.setCancelled(true);
-            lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
-            return;
-        }
-
-        if (staminaManager.isExhausted(player)) {
-            TextUtil.actionBar(player, config.getString("messages.prefix", "") + config.getString("messages.exhausted", "Exhausted!"));
             event.setCancelled(true);
             lastActivationTime.put(player.getUniqueId(), System.currentTimeMillis());
             return;

@@ -1,10 +1,15 @@
 package com.mha.plugin.quirk;
 
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.util.ConfigManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.BossBar;
 import org.bukkit.Sound;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
@@ -13,28 +18,28 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract base class for all Quirks.
- * Provides common functionality for cooldowns, stamina costs, and ability activation.
+ * Provides common functionality for cooldowns and ability activation.
  * Power scaling is applied based on Quirk rarity.
+ *
+ * Stamina system removed - now uses pure cooldown timers for cleaner gameplay.
  */
 public abstract class Quirk {
 
     protected final QuirkType type;
     protected final ConfigManager config;
-    protected final StaminaManager staminaManager;
     protected final Map<UUID, Long> cooldownTimestamps;
+    protected final Map<UUID, BossBar> cooldownBars;
     protected final int baseCooldown;
-    protected final int baseStaminaCost;
 
     /**
      * Create a Quirk instance.
      */
-    protected Quirk(final QuirkType type, final ConfigManager config, final StaminaManager staminaManager) {
+    protected Quirk(final QuirkType type, final ConfigManager config) {
         this.type = type;
         this.config = config;
-        this.staminaManager = staminaManager;
         this.cooldownTimestamps = new ConcurrentHashMap<>();
+        this.cooldownBars = new ConcurrentHashMap<>();
         this.baseCooldown = getCooldownFromConfig();
-        this.baseStaminaCost = getStaminaCostFromConfig();
     }
 
     /**
@@ -73,14 +78,10 @@ public abstract class Quirk {
     }
 
     /**
-     * Check if the player can use this Quirk (cooldown + stamina).
+     * Check if the player can use this Quirk (cooldown only - no stamina).
      */
     public boolean canUse(final Player player) {
         if (!isEnabled()) {
-            return false;
-        }
-
-        if (staminaManager.isExhausted(player)) {
             return false;
         }
 
@@ -88,7 +89,15 @@ public abstract class Quirk {
             return false;
         }
 
-        return getCooldownRemaining(player) <= 0;
+        final long remaining = getCooldownRemaining(player);
+        if (remaining > 0) {
+            // Show cooldown message via actionbar
+            final double secondsLeft = remaining / 1000.0;
+            TextUtil.actionBar(player, "§cAbility on cooldown! Wait " + String.format("%.1f", secondsLeft) + "s");
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -126,6 +135,12 @@ public abstract class Quirk {
     public void onRemove(final Player player) {
         deactivate(player);
         cooldownTimestamps.remove(player.getUniqueId());
+
+        // Remove boss bar if exists
+        final BossBar bar = cooldownBars.remove(player.getUniqueId());
+        if (bar != null) {
+            bar.removePlayer(player);
+        }
     }
 
     /**
@@ -151,13 +166,52 @@ public abstract class Quirk {
     }
 
     /**
-     * Start the cooldown timer for a player.
+     * Start the cooldown timer for a player with visual boss bar.
      */
     protected void startCooldown(final Player player) {
         cooldownTimestamps.put(player.getUniqueId(), System.currentTimeMillis());
 
-        final long cooldownTicks = Math.max(1L, getCooldown() / 50L);
+        final long cooldownMs = getCooldown();
+        final long cooldownTicks = Math.max(1L, cooldownMs / 50L);
+        final JavaPlugin plugin = JavaPlugin.getPlugin(com.mha.plugin.MHAPlugin.class);
 
+        // Create boss bar for cooldown display
+        final BossBar bar;
+        if (config.getBoolean("settings.cooldown-display", true)) {
+            bar = plugin.getServer().createBossBar(
+                    "§c" + getType().getDisplayName() + " cooldown",
+                    BarColor.BLUE,
+                    BarStyle.SEGMENTED_10
+            );
+            bar.setProgress(1.0);
+            bar.addPlayer(player);
+            cooldownBars.put(player.getUniqueId(), bar);
+
+            // Update boss bar during cooldown
+            new BukkitRunnable() {
+                long elapsed = 0;
+
+                @Override
+                public void run() {
+                    elapsed += 50; // 50ms per tick
+                    final double progress = 1.0 - ((double) elapsed / cooldownMs);
+
+                    if (!player.isOnline() || progress <= 0) {
+                        bar.removePlayer(player);
+                        cooldownBars.remove(player.getUniqueId());
+                        cancel();
+                        return;
+                    }
+
+                    bar.setProgress(Math.max(0, progress));
+                    bar.setTitle("§b" + getType().getDisplayName() + " §7- §e" + String.format("%.1f", (cooldownMs - elapsed) / 1000.0) + "s");
+                }
+            }.runTaskTimer(plugin, 1L, 1L);
+        } else {
+            bar = null;
+        }
+
+        // Notify when ready
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -166,25 +220,7 @@ public abstract class Quirk {
                     player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 }
             }
-        }.runTaskLater(org.bukkit.plugin.java.JavaPlugin.getPlugin(com.mha.plugin.MHAPlugin.class), cooldownTicks);
-    }
-
-    /**
-     * Consume stamina from the player with rarity scaling applied.
-     * @return true if stamina was successfully consumed
-     */
-    protected boolean consumeStamina(final Player player) {
-        final int cost = getStaminaCost();
-        return staminaManager.consumeStamina(player, cost);
-    }
-
-    /**
-     * Get stamina cost for this Quirk with rarity scaling applied.
-     * Rarer quirks cost less stamina.
-     */
-    public int getStaminaCost() {
-        final int configCost = config.getQuirkInt(type.getId(), "stamina-cost", baseStaminaCost);
-        return (int) (configCost * getRarity().getStaminaMultiplier());
+        }.runTaskLater(plugin, cooldownTicks);
     }
 
     /**
@@ -207,6 +243,11 @@ public abstract class Quirk {
      */
     public void resetCooldown(final Player player) {
         cooldownTimestamps.remove(player.getUniqueId());
+
+        final BossBar bar = cooldownBars.remove(player.getUniqueId());
+        if (bar != null) {
+            bar.removePlayer(player);
+        }
     }
 
     /**
@@ -214,16 +255,17 @@ public abstract class Quirk {
      */
     public void clearAllCooldowns() {
         cooldownTimestamps.clear();
+
+        for (final BossBar bar : cooldownBars.values()) {
+            bar.removeAll();
+        }
+        cooldownBars.clear();
     }
 
     // Configuration helper methods
 
     protected int getCooldownFromConfig() {
         return config.getQuirkInt(type.getId(), "cooldown", 5000);
-    }
-
-    protected int getStaminaCostFromConfig() {
-        return config.getQuirkInt(type.getId(), "stamina-cost", 10);
     }
 
     protected int getConfigInt(final String key, final int defaultValue) {

@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -27,8 +26,8 @@ public final class ElectrificationQuirk extends Quirk {
     private final double ultimateRadius;
     private final int selfStunDuration;
 
-    public ElectrificationQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.ELECTRIFICATION, config, staminaManager);
+    public ElectrificationQuirk(final ConfigManager config) {
+        super(QuirkType.ELECTRIFICATION, config);
 
         this.shockDamage = getConfigDouble("shock-damage", 5.0);
         this.shockRadius = getConfigDouble("shock-radius", 5.0);
@@ -41,11 +40,6 @@ public final class ElectrificationQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

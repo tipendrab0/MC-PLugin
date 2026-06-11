@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -35,8 +34,8 @@ public final class ZeroGravityQuirk extends Quirk implements Listener {
     private final Map<UUID, UUID> activators;
     private final Map<UUID, BukkitRunnable> activeTasks;
 
-    public ZeroGravityQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.ZERO_GRAVITY, config, staminaManager);
+    public ZeroGravityQuirk(final ConfigManager config) {
+        super(QuirkType.ZERO_GRAVITY, config);
 
         this.duration = getConfigInt("duration", 10000);
         this.maxTargets = getConfigInt("max-targets", 3);
@@ -49,11 +48,6 @@ public final class ZeroGravityQuirk extends Quirk implements Listener {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

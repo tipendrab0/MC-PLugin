@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -38,8 +37,8 @@ public final class PermeationQuirk extends Quirk implements Listener {
     private final Map<UUID, PermeationState> activeStates;
     private final Map<UUID, Location> lastSafePositions;
 
-    public PermeationQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.PERMEATION, config, staminaManager);
+    public PermeationQuirk(final ConfigManager config) {
+        super(QuirkType.PERMEATION, config);
 
         this.maxDuration = getConfigInt("max-duration-ticks", 100);
         this.staminaPerSecond = getConfigInt("stamina-per-second", 20);
@@ -51,11 +50,6 @@ public final class PermeationQuirk extends Quirk implements Listener {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
@@ -111,13 +105,7 @@ public final class PermeationQuirk extends Quirk implements Listener {
                     return;
                 }
 
-                // Drain stamina
-                if (ticks % 20 == 0) {
-                    if (!staminaManager.consumeStamina(player, staminaPerSecond)) {
-                        deactivatePermeation(player);
-                        cancel();
-                    }
-                }
+                // Timer continues
 
                 // Update last safe position (position not inside a block)
                 final Location current = player.getLocation();

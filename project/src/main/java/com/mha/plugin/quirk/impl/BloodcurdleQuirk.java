@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.MHAPlugin;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import com.mha.plugin.util.TextUtil;
 import org.bukkit.Sound;
@@ -26,8 +25,8 @@ public class BloodcurdleQuirk extends Quirk implements Listener {
     private final double maxRange;
     private final Map<UUID, LivingEntity> bloodSamples = new ConcurrentHashMap<>();
 
-    public BloodcurdleQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.BLOODCURDLE, config, staminaManager);
+    public BloodcurdleQuirk(final ConfigManager config) {
+        super(QuirkType.BLOODCURDLE, config);
         this.paralysisDuration = getConfigInt("paralysis-duration-ticks", 100);
         this.maxRange = getConfigDouble("max-range", 30.0);
     }
@@ -50,18 +49,12 @@ public class BloodcurdleQuirk extends Quirk implements Listener {
             return false;
         }
 
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "§cNot enough stamina!");
-            return false;
-        }
-
         final LivingEntity target = bloodSamples.get(player.getUniqueId());
 
         // Check for valid target
         if (target == null || target.isDead()) {
             player.sendMessage("§cYou don't have a fresh blood sample!");
             resetCooldown(player);
-            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
             return false;
         }
 
@@ -70,7 +63,6 @@ public class BloodcurdleQuirk extends Quirk implements Listener {
             player.sendMessage("§cTarget is in a different dimension!");
             bloodSamples.remove(player.getUniqueId());
             resetCooldown(player);
-            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
             return false;
         }
 
@@ -78,7 +70,6 @@ public class BloodcurdleQuirk extends Quirk implements Listener {
         if (target.getLocation().distance(player.getLocation()) > maxRange) {
             player.sendMessage("§cTarget is too far away!");
             resetCooldown(player);
-            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
             return false;
         }
 

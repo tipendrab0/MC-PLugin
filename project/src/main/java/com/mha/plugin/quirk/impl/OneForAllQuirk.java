@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -28,24 +27,19 @@ public final class OneForAllQuirk extends Quirk {
     private final double dashMultiplier;
     private final double selfDamagePercent;
 
-    public OneForAllQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.ONE_FOR_ALL, config, staminaManager);
+    public OneForAllQuirk(final ConfigManager config) {
+        super(QuirkType.ONE_FOR_ALL, config);
 
         this.smashDamage = config.getQuirkNestedDouble("one-for-all", "smash", "damage", 15.0);
         this.smashRadius = config.getQuirkNestedDouble("one-for-all", "smash", "radius", 5.0);
         this.flickDamage = config.getQuirkNestedDouble("one-for-all", "finger-flick", "damage", 10.0);
         this.dashMultiplier = config.getQuirkNestedDouble("one-for-all", "mobility", "dash-multiplier", 3.0);
-        this.selfDamagePercent = config.getQuirkNestedDouble("one-for-all", "drawback", "self-damage-percent", 5.0);
+        this.selfDamagePercent = config.getQuirkNestedDouble("one-for-all", "drawback", "self-damage-percent", 2.0);
     }
 
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

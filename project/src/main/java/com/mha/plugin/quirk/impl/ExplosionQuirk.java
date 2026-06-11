@@ -1,10 +1,10 @@
 package com.mha.plugin.quirk.impl;
 
 import com.mha.plugin.MHAPlugin;
+import com.mha.plugin.protection.ProtectionManager;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -41,8 +41,8 @@ public final class ExplosionQuirk extends Quirk implements Listener {
     private final Map<UUID, Long> fallDamageImmunity;
     private static final long FALL_IMMUNITY_DURATION_MS = 5000;
 
-    public ExplosionQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.EXPLOSION, config, staminaManager);
+    public ExplosionQuirk(final ConfigManager config) {
+        super(QuirkType.EXPLOSION, config);
 
         this.damage = getConfigDouble("damage", 6.0);
         this.range = getConfigDouble("range", 8.0);
@@ -54,11 +54,6 @@ public final class ExplosionQuirk extends Quirk implements Listener {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
@@ -78,6 +73,13 @@ public final class ExplosionQuirk extends Quirk implements Listener {
      */
     private void createExplosion(final Player player, final Location location) {
         if (location == null || location.getWorld() == null || player == null) {
+            return;
+        }
+
+        // Check WorldGuard protection
+        if (!ProtectionManager.canExplode(location)) {
+            TextUtil.actionBar(player, "§cCannot use explosions in protected regions!");
+            resetCooldown(player);
             return;
         }
 
@@ -203,6 +205,10 @@ public final class ExplosionQuirk extends Quirk implements Listener {
                     // Only destroy weak blocks (stone, dirt, grass, etc.)
                     final Material type = block.getType();
                     if (isBreakable(type)) {
+                        // Check WorldGuard protection for each block
+                        if (!ProtectionManager.canBreakBlock(player, block.getLocation())) {
+                            continue;
+                        }
                         plugin.getDestructionManager().recordBlockChange(player, block);
                         // Set to AIR instead of breakNaturally to prevent item drops
                         block.setType(Material.AIR);

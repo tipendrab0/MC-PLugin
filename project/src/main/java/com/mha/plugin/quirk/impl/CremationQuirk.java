@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -27,8 +26,8 @@ public final class CremationQuirk extends Quirk {
     private final double pillarRadius;
     private final double selfDamagePercent;
 
-    public CremationQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.CREMATION, config, staminaManager);
+    public CremationQuirk(final ConfigManager config) {
+        super(QuirkType.CREMATION, config);
 
         this.damage = getConfigDouble("damage", 10.0);
         this.range = getConfigDouble("range", 15.0);
@@ -41,11 +40,6 @@ public final class CremationQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

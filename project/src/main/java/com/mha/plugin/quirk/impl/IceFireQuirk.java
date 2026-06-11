@@ -1,10 +1,10 @@
 package com.mha.plugin.quirk.impl;
 
 import com.mha.plugin.MHAPlugin;
+import com.mha.plugin.protection.ProtectionManager;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -34,8 +34,8 @@ public final class IceFireQuirk extends Quirk {
     private final double fireRadius;
     private final int fireTicks;
 
-    public IceFireQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.ICE_FIRE, config, staminaManager);
+    public IceFireQuirk(final ConfigManager config) {
+        super(QuirkType.ICE_FIRE, config);
 
         // Ice configuration
         this.iceDuration = config.getQuirkNestedInt("ice-fire", "ice", "duration", 5000);
@@ -62,11 +62,6 @@ public final class IceFireQuirk extends Quirk {
      */
     public boolean activate(final Player player, final Action action) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
@@ -161,11 +156,22 @@ public final class IceFireQuirk extends Quirk {
         final int radius = (int) iceRadius;
         final MHAPlugin plugin = JavaPlugin.getPlugin(MHAPlugin.class);
 
+        // Check WorldGuard protection
+        if (!ProtectionManager.canBreakBlock(player, center)) {
+            TextUtil.actionBar(player, "§cCannot freeze blocks in protected regions!");
+            return;
+        }
+
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     final Location loc = center.clone().add(x, y, z);
                     final Block block = loc.getBlock();
+
+                    // Skip if protected
+                    if (!ProtectionManager.canBreakBlock(player, loc)) {
+                        continue;
+                    }
 
                     // Place ice on air blocks and turn water to ice
                     if (block.getType() == Material.WATER) {
@@ -262,11 +268,22 @@ public final class IceFireQuirk extends Quirk {
         final int radius = (int) fireRadius;
         final MHAPlugin plugin = JavaPlugin.getPlugin(MHAPlugin.class);
 
+        // Check WorldGuard protection
+        if (!ProtectionManager.canBreakBlock(player, center)) {
+            TextUtil.actionBar(player, "§cCannot ignite blocks in protected regions!");
+            return;
+        }
+
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     final Location loc = center.clone().add(x, y, z);
                     final Block block = loc.getBlock();
+
+                    // Skip if protected
+                    if (!ProtectionManager.canBreakBlock(player, loc)) {
+                        continue;
+                    }
 
                     // Place on solid blocks
                     if (block.getType() == Material.AIR && loc.clone().add(0, -1, 0).getBlock().getType().isSolid()) {

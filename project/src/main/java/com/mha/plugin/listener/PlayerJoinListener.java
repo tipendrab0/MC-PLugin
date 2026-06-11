@@ -5,7 +5,6 @@ import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.awakening.QuirkAwakener;
 import com.mha.plugin.quirk.QuirkManager;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -25,7 +24,6 @@ public final class PlayerJoinListener implements Listener {
     private final JavaPlugin plugin;
     private final QuirkManager quirkManager;
     private final QuirkAwakener quirkAwakener;
-    private final StaminaManager staminaManager;
     private final ConfigManager config;
     private final boolean autoAwaken;
 
@@ -33,11 +31,9 @@ public final class PlayerJoinListener implements Listener {
      * Create the join listener.
      */
     public PlayerJoinListener(final JavaPlugin plugin, final QuirkManager quirkManager,
-                               final StaminaManager staminaManager, final ConfigManager config,
-                               final QuirkAwakener quirkAwakener) {
+                               final ConfigManager config, final QuirkAwakener quirkAwakener) {
         this.plugin = plugin;
         this.quirkManager = quirkManager;
-        this.staminaManager = staminaManager;
         this.config = config;
         this.quirkAwakener = quirkAwakener;
         this.autoAwaken = config.getBoolean("settings.auto-awaken-on-first-join", true);
@@ -46,9 +42,6 @@ public final class PlayerJoinListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerJoin(final PlayerJoinEvent event) {
         final Player player = event.getPlayer();
-
-        // Initialize stamina
-        staminaManager.getOrCreateStamina(player);
 
         // Check if player needs Quirk awakening
         if (autoAwaken && !quirkManager.hasQuirk(player) && !quirkAwakener.hasAwakened(player.getUniqueId())) {

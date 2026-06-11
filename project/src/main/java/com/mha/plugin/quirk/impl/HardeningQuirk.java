@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -37,8 +36,8 @@ public final class HardeningQuirk extends Quirk implements Listener {
     private final Map<UUID, Long> activeArmors;
     private final Map<UUID, Long> redRiotMode;
 
-    public HardeningQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.HARDENING, config, staminaManager);
+    public HardeningQuirk(final ConfigManager config) {
+        super(QuirkType.HARDENING, config);
 
         this.armorDuration = config.getQuirkNestedInt("hardening", "armor", "duration-ticks", 200);
         this.armorBonus = config.getQuirkNestedInt("hardening", "armor", "bonus-level", 6);
@@ -53,11 +52,6 @@ public final class HardeningQuirk extends Quirk implements Listener {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

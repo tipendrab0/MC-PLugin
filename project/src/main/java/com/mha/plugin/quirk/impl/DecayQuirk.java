@@ -1,10 +1,10 @@
 package com.mha.plugin.quirk.impl;
 
 import com.mha.plugin.MHAPlugin;
+import com.mha.plugin.protection.ProtectionManager;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -32,8 +32,8 @@ public final class DecayQuirk extends Quirk {
     private final Map<UUID, Integer> decayedTiers;
     private final Set<Location> activelyDecaying;
 
-    public DecayQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.DECAY, config, staminaManager);
+    public DecayQuirk(final ConfigManager config) {
+        super(QuirkType.DECAY, config);
 
         this.witherDamage = config.getQuirkNestedDouble("decay", "wither", "damage", 4.0);
         this.witherDuration = config.getQuirkNestedInt("decay", "wither", "duration-ticks", 100);
@@ -48,11 +48,6 @@ public final class DecayQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
@@ -89,7 +84,7 @@ public final class DecayQuirk extends Quirk {
         TextUtil.actionBar(player, "§4§lDECAY SPREADING! §cEverything crumbles!");
         player.sendMessage("§4§l>>> DECAY - SPREADING WAVE <<<");
 
-        final int maxRadius = 12;
+        final int maxRadius = 10;
         new BukkitRunnable() {
             int currentRadius = 0;
 
@@ -156,6 +151,12 @@ public final class DecayQuirk extends Quirk {
 
     private void decayBlocks(final Player source, final Location center, final int radius) {
         if (center.getWorld() == null) return;
+
+        // Check WorldGuard protection
+        if (!ProtectionManager.canBreakBlock(source, center)) {
+            TextUtil.actionBar(source, "§cCannot decay blocks in protected regions!");
+            return;
+        }
 
         for (int x = -radius; x <= radius; x++) {
             for (int y = -radius; y <= radius; y++) {

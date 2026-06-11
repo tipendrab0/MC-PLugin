@@ -1,6 +1,8 @@
 package com.mha.plugin.listener;
 
 import com.mha.plugin.MHAPlugin;
+import com.mha.plugin.bounty.BountyManager;
+import com.mha.plugin.event.EventManager;
 import com.mha.plugin.reputation.ReputationManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Material;
@@ -24,13 +26,17 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BountyListener implements Listener {
 
+    private final MHAPlugin plugin;
     private final ReputationManager repManager;
+    private final BountyManager bountyManager;
     private final Economy econ;
     private final Map<UUID, Long> recentDeaths;
     private static final long DEATH_COOLDOWN_MS = 5000; // 5 second window to prevent duplicates
 
     public BountyListener(MHAPlugin plugin) {
+        this.plugin = plugin;
         this.repManager = plugin.getReputationManager();
+        this.bountyManager = plugin.getBountyManager();
         this.econ = plugin.getEconomy();
         this.recentDeaths = new ConcurrentHashMap<>();
     }
@@ -69,6 +75,10 @@ public class BountyListener implements Listener {
             // Calculate bounty based on how evil they are
             double bountyAmount = Math.abs(victimScore) * 10.0;
 
+            // Apply event multiplier if active
+            final double eventMultiplier = plugin.getEventManager().getMultiplier(EventManager.EventType.DOUBLE_BOUNTY);
+            bountyAmount *= eventMultiplier;
+
             // Cap bounty to prevent huge payouts
             bountyAmount = Math.min(bountyAmount, 10000.0);
 
@@ -87,8 +97,15 @@ public class BountyListener implements Listener {
                     }
                 }
 
-                // Reward the hero with reputation boost
-                repManager.addHeroPoints(killer, 10);
+                // Record the bounty claim
+                bountyManager.recordClaim(killer.getUniqueId(), victim.getUniqueId(), bountyAmount);
+
+                // Reward the hero with reputation boost (apply event multiplier)
+                int repGain = 10;
+                if (plugin.getEventManager().isEventActive(EventManager.EventType.DOUBLE_REPUTATION)) {
+                    repGain *= 2;
+                }
+                repManager.addHeroPoints(killer, repGain);
             }
         }
     }

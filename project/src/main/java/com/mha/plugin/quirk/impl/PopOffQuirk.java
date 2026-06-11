@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -26,8 +25,8 @@ public final class PopOffQuirk extends Quirk {
     private final int maxBalls;
     private final double bounceMultiplier;
 
-    public PopOffQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.POP_OFF, config, staminaManager);
+    public PopOffQuirk(final ConfigManager config) {
+        super(QuirkType.POP_OFF, config);
 
         this.damage = getConfigDouble("damage", 3.0);
         this.slowDuration = getConfigDouble("slow-duration", 5.0);
@@ -38,11 +37,6 @@ public final class PopOffQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

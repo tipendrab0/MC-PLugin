@@ -3,13 +3,14 @@ package com.mha.plugin.quirk;
 /**
  * Rarity levels for Quirks.
  * Higher rarity = stronger abilities but lower chance to obtain.
+ * Legendary increased to 5% for better player experience.
  */
 public enum QuirkRarity {
     COMMON("§fCommon", "A standard Quirk with basic abilities", 40),      // 40% chance
     UNCOMMON("§aUncommon", "A slightly above-average Quirk", 30),         // 30% chance
-    RARE("§bRare", "A powerful Quirk with advanced abilities", 18),         // 18% chance
-    EPIC("§dEpic", "An exceptional Quirk with devastating power", 9),       // 9% chance
-    LEGENDARY("§6Legendary", "A rare and immensely powerful Quirk", 3);     // 3% chance
+    RARE("§bRare", "A powerful Quirk with advanced abilities", 17),       // 17% chance
+    EPIC("§dEpic", "An exceptional Quirk with devastating power", 8),     // 8% chance
+    LEGENDARY("§6Legendary", "A rare and immensely powerful Quirk", 5);    // 5% chance (increased from 3%)
 
     private final String displayName;
     private final String description;
@@ -42,25 +43,13 @@ public enum QuirkRarity {
             case UNCOMMON -> 1.2;
             case RARE -> 1.5;
             case EPIC -> 2.0;
-            case LEGENDARY -> 3.0;
-        };
-    }
-
-    /**
-     * Get stamina cost reduction for this rarity.
-     */
-    public double getStaminaMultiplier() {
-        return switch (this) {
-            case COMMON -> 1.0;
-            case UNCOMMON -> 0.95;
-            case RARE -> 0.85;
-            case EPIC -> 0.75;
-            case LEGENDARY -> 0.6;
+            case LEGENDARY -> 2.5; // Reduced from 3.0 for better balance
         };
     }
 
     /**
      * Get cooldown reduction for this rarity.
+     * Rarer quirks have shorter cooldowns.
      */
     public long getCooldownMultiplier() {
         return switch (this) {
@@ -68,7 +57,7 @@ public enum QuirkRarity {
             case UNCOMMON -> 95;
             case RARE -> 85;
             case EPIC -> 75;
-            case LEGENDARY -> 50;
+            case LEGENDARY -> 60;
         };
     }
 

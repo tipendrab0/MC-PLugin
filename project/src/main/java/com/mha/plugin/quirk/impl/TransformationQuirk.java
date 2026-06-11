@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -48,8 +47,8 @@ public final class TransformationQuirk extends Quirk {
         }
     }
 
-    public TransformationQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.TRANSFORMATION, config, staminaManager);
+    public TransformationQuirk(final ConfigManager config) {
+        super(QuirkType.TRANSFORMATION, config);
 
         this.transformDuration = getConfigInt("duration-ticks", 600);
         this.healthRequired = getConfigDouble("health-required", 3.0);
@@ -60,11 +59,6 @@ public final class TransformationQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

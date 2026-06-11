@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -25,8 +24,8 @@ public final class NavelLaserQuirk extends Quirk {
     private final double beamWidth;
     private final int chargeTicks;
 
-    public NavelLaserQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.NAVEL_LASER, config, staminaManager);
+    public NavelLaserQuirk(final ConfigManager config) {
+        super(QuirkType.NAVEL_LASER, config);
 
         this.damage = getConfigDouble("damage", 7.0);
         this.range = getConfigDouble("range", 25.0);
@@ -37,11 +36,6 @@ public final class NavelLaserQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

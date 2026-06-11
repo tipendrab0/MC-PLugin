@@ -1,35 +1,36 @@
 package com.mha.plugin.quirk;
 
 import com.mha.plugin.quirk.impl.*;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
  * Manages Quirk registration, assignment, and player-Quirk mapping.
+ * Stamina system removed - pure cooldown timers now.
  */
 public final class QuirkManager {
 
     private final JavaPlugin plugin;
     private final ConfigManager config;
-    private final StaminaManager staminaManager;
     private final Map<QuirkType, Quirk> quirks;
     private final Map<UUID, QuirkType> playerQuirks;
     private final Set<UUID> awakeningInProgress;
+    private final Map<UUID, Long> globalCooldowns; // Combo cooldown system
 
-    public QuirkManager(final JavaPlugin plugin, final ConfigManager config, final StaminaManager staminaManager) {
+    public QuirkManager(final JavaPlugin plugin, final ConfigManager config) {
         this.plugin = plugin;
         this.config = config;
-        this.staminaManager = staminaManager;
         this.quirks = new HashMap<>();
         this.playerQuirks = new HashMap<>();
         this.awakeningInProgress = new HashSet<>();
+        this.globalCooldowns = new ConcurrentHashMap<>();
 
         registerQuirks();
         loadPlayerQuirks();
@@ -40,31 +41,32 @@ public final class QuirkManager {
      */
     private void registerQuirks() {
         // COMMON Quirks
-        registerQuirk(new PopOffQuirk(config, staminaManager));
-        registerQuirk(new NavelLaserQuirk(config, staminaManager));
-        registerQuirk(new EngineQuirk(config, staminaManager));
-        registerQuirk(new FrogQuirk(config, staminaManager));
+        registerQuirk(new PopOffQuirk(config));
+        registerQuirk(new NavelLaserQuirk(config));
+        registerQuirk(new EngineQuirk(config));
+        registerQuirk(new FrogQuirk(config));
 
         // UNCOMMON Quirks
-        registerQuirk(new ExplosionQuirk(config, staminaManager));
-        registerQuirk(new ZeroGravityQuirk(config, staminaManager));
-        registerQuirk(new TransformationQuirk(config, staminaManager));
+        registerQuirk(new ExplosionQuirk(config));
+        registerQuirk(new ZeroGravityQuirk(config));
+        registerQuirk(new TransformationQuirk(config));
 
         // RARE Quirks
-        registerQuirk(new IceFireQuirk(config, staminaManager));
-        registerQuirk(new HardeningQuirk(config, staminaManager));
-        registerQuirk(new ElectrificationQuirk(config, staminaManager));
-        registerQuirk(new WaveMotionQuirk(config, staminaManager));
+        registerQuirk(new IceFireQuirk(config));
+        registerQuirk(new HardeningQuirk(config));
+        registerQuirk(new ElectrificationQuirk(config));
+        registerQuirk(new WaveMotionQuirk(config));
 
         // EPIC Quirks
-        registerQuirk(new CremationQuirk(config, staminaManager));
-        registerQuirk(new CreationQuirk(config, staminaManager));
-        registerQuirk(new PermeationQuirk(config, staminaManager));
-        registerQuirk(new BloodcurdleQuirk(config, staminaManager));
+        registerQuirk(new CremationQuirk(config));
+        registerQuirk(new CreationQuirk(config));
+        registerQuirk(new PermeationQuirk(config));
+        registerQuirk(new BloodcurdleQuirk(config));
+
         // LEGENDARY Quirks
-        registerQuirk(new OneForAllQuirk(config, staminaManager));
-        registerQuirk(new DecayQuirk(config, staminaManager));
-        registerQuirk(new BlackwhipQuirk(config, staminaManager));
+        registerQuirk(new OneForAllQuirk(config));
+        registerQuirk(new DecayQuirk(config));
+        registerQuirk(new BlackwhipQuirk(config));
     }
 
     /**
@@ -261,7 +263,6 @@ public final class QuirkManager {
      * Clear player data on disconnect.
      */
     public void onPlayerQuit(final UUID playerId) {
-        staminaManager.removePlayer(playerId);
         awakeningInProgress.remove(playerId);
     }
 

@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -25,8 +24,8 @@ public final class WaveMotionQuirk extends Quirk {
     private final double flightStaminaDrain;
     private final int staminaDrainInterval;
 
-    public WaveMotionQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.WAVE_MOTION, config, staminaManager);
+    public WaveMotionQuirk(final ConfigManager config) {
+        super(QuirkType.WAVE_MOTION, config);
 
         this.waveDamage = getConfigDouble("wave-damage", 8.0);
         this.waveRange = getConfigDouble("wave-range", 20.0);
@@ -38,11 +37,6 @@ public final class WaveMotionQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 

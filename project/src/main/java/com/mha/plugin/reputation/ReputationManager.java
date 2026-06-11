@@ -191,4 +191,18 @@ public final class ReputationManager implements Listener {
         }
         config.saveConfig();
     }
+
+    /**
+     * Get all reputation states (for leaderboards).
+     */
+    public Map<UUID, ReputationState> getAllReputations() {
+        return playerReputation;
+    }
+
+    /**
+     * Get rank from a reputation score directly.
+     */
+    public ReputationRank getRankByScore(final int score) {
+        return rankCalculator.getRank(score);
+    }
 }

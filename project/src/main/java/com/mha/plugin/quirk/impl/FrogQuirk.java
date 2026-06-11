@@ -3,7 +3,6 @@ package com.mha.plugin.quirk.impl;
 import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.util.TextUtil;
 import com.mha.plugin.quirk.QuirkType;
-import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -29,8 +28,8 @@ public final class FrogQuirk extends Quirk {
     private final double jumpMultiplier;
     private final int swimSpeedDuration;
 
-    public FrogQuirk(final ConfigManager config, final StaminaManager staminaManager) {
-        super(QuirkType.FROG, config, staminaManager);
+    public FrogQuirk(final ConfigManager config) {
+        super(QuirkType.FROG, config);
 
         this.tongueRange = config.getQuirkNestedDouble("frog", "tongue", "range", 20.0);
         this.tongueDamage = config.getQuirkNestedDouble("frog", "tongue", "damage", 4.0);
@@ -42,11 +41,6 @@ public final class FrogQuirk extends Quirk {
     @Override
     public boolean activate(final Player player) {
         if (!canUse(player)) {
-            return false;
-        }
-
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "Not enough stamina!");
             return false;
         }
 
