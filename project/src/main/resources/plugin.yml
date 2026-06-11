@@ -3,7 +3,7 @@ version: ${project.version}
 main: com.mha.plugin.MHAPlugin
 api-version: '1.21.11'
 
-softdepend: [Vault]
+softdepend: [Vault, LibsDisguises]
 
 author: MHA Development Team
 description: Bring the Quirk system from My Hero Academia to Minecraft with advanced features including 19 quirks, rarity system, and awakening ceremony

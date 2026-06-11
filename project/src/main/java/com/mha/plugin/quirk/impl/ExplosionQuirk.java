@@ -6,6 +6,7 @@ import com.mha.plugin.quirk.Quirk;
 import com.mha.plugin.quirk.QuirkType;
 import com.mha.plugin.stamina.StaminaManager;
 import com.mha.plugin.util.ConfigManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -14,21 +15,31 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Explosion Quirk - Bakugo Katsuki's ability.
  * Creates explosions that damage entities and launch the user.
  */
-public final class ExplosionQuirk extends Quirk {
+public final class ExplosionQuirk extends Quirk implements Listener {
 
     private final double damage;
     private final double range;
     private final boolean breakBlocks;
     private final double launchMultiplier;
+    private final Map<UUID, Long> fallDamageImmunity;
+    private static final long FALL_IMMUNITY_DURATION_MS = 5000;
 
     public ExplosionQuirk(final ConfigManager config, final StaminaManager staminaManager) {
         super(QuirkType.EXPLOSION, config, staminaManager);
@@ -37,6 +48,7 @@ public final class ExplosionQuirk extends Quirk {
         this.range = getConfigDouble("range", 8.0);
         this.breakBlocks = getConfigBoolean("break-blocks", true);
         this.launchMultiplier = getConfigDouble("launch-multiplier", 1.5);
+        this.fallDamageImmunity = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -120,9 +132,34 @@ public final class ExplosionQuirk extends Quirk {
                 .multiply(-launchMultiplier);
         player.setVelocity(player.getVelocity().add(launchDirection.add(new Vector(0, 0.5, 0))));
 
+        // Grant temporary fall damage immunity (5 seconds)
+        fallDamageImmunity.put(player.getUniqueId(), System.currentTimeMillis() + FALL_IMMUNITY_DURATION_MS);
+        player.sendMessage("§eRocket boost! Fall damage immunity for 5 seconds.");
+
         // Break blocks around explosion (if enabled and not protected)
         if (breakBlocks) {
             destroyBlocks(player, location);
+        }
+    }
+
+    /**
+     * Event handler to cancel fall damage for recently launched players.
+     */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onEntityDamage(final EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
+            return;
+        }
+
+        if (event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+            final Long immunityEnd = fallDamageImmunity.get(player.getUniqueId());
+            if (immunityEnd != null && System.currentTimeMillis() < immunityEnd) {
+                event.setCancelled(true);
+                player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 10, 0.5, 0.5, 0.5, 0);
+
+                // Remove immunity after first fall saved
+                fallDamageImmunity.remove(player.getUniqueId());
+            }
         }
     }
 
@@ -150,6 +187,7 @@ public final class ExplosionQuirk extends Quirk {
 
     /**
      * Destroy weak blocks around the explosion.
+     * Blocks are set to AIR (no item drops) to prevent economy exploits.
      */
     private void destroyBlocks(final Player player, final Location center) {
         final int radius = (int) (range / 2);
@@ -166,7 +204,12 @@ public final class ExplosionQuirk extends Quirk {
                     final Material type = block.getType();
                     if (isBreakable(type)) {
                         plugin.getDestructionManager().recordBlockChange(player, block);
-                        block.breakNaturally(false);
+                        // Set to AIR instead of breakNaturally to prevent item drops
+                        block.setType(Material.AIR);
+
+                        // Spawn break particles for visual effect
+                        block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5),
+                                10, 0.2, 0.2, 0.2, 0.05, type.createBlockData());
                     }
                 }
             }

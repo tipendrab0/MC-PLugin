@@ -50,15 +50,35 @@ public class BloodcurdleQuirk extends Quirk implements Listener {
             return false;
         }
 
-        final LivingEntity target = bloodSamples.get(player.getUniqueId());
-
-        if (target == null || target.isDead() || target.getLocation().distance(player.getLocation()) > maxRange) {
-            player.sendMessage("§cYou don't have a fresh blood sample or the target is too far!");
+        if (!consumeStamina(player)) {
+            TextUtil.actionBar(player, "§cNot enough stamina!");
             return false;
         }
 
-        if (!consumeStamina(player)) {
-            TextUtil.actionBar(player, "§cNot enough stamina!");
+        final LivingEntity target = bloodSamples.get(player.getUniqueId());
+
+        // Check for valid target
+        if (target == null || target.isDead()) {
+            player.sendMessage("§cYou don't have a fresh blood sample!");
+            resetCooldown(player);
+            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
+            return false;
+        }
+
+        // Check if target is in same world before calculating distance
+        if (!target.getWorld().equals(player.getWorld())) {
+            player.sendMessage("§cTarget is in a different dimension!");
+            bloodSamples.remove(player.getUniqueId());
+            resetCooldown(player);
+            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
+            return false;
+        }
+
+        // Now safe to calculate distance
+        if (target.getLocation().distance(player.getLocation()) > maxRange) {
+            player.sendMessage("§cTarget is too far away!");
+            resetCooldown(player);
+            staminaManager.restoreStamina(player, getStaminaCost()); // Refund stamina
             return false;
         }
 

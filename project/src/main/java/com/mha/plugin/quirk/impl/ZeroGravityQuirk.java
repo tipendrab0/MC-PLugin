@@ -232,17 +232,24 @@ public final class ZeroGravityQuirk extends Quirk implements Listener {
     @Override
     public void onRemove(final Player player) {
         // Remove all targets started by this player
+        removeAllTargetsByActivator(player.getUniqueId());
+        super.onRemove(player);
+    }
+
+    /**
+     * Remove all floating targets created by a specific activator.
+     * Called when a player disconnects.
+     */
+    public void removeAllTargetsByActivator(final UUID activatorId) {
         final List<UUID> toRemove = new ArrayList<>();
         for (final Map.Entry<UUID, UUID> entry : activators.entrySet()) {
-            if (entry.getValue().equals(player.getUniqueId())) {
+            if (entry.getValue().equals(activatorId)) {
                 toRemove.add(entry.getKey());
             }
         }
         for (final UUID targetId : toRemove) {
             stopLevitation(targetId);
         }
-
-        super.onRemove(player);
     }
 
     /**

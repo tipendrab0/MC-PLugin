@@ -27,12 +27,17 @@ public final class StaminaManager {
     private final int warningThreshold;
     private final long regenDelay;
     private final Map<UUID, Long> lastUsedTime;
+    private final Map<UUID, Long> lastWarningTime;
+    private final Map<UUID, StaminaState.State> previousState;
+    private static final long WARNING_COOLDOWN_MS = 3000;
 
     public StaminaManager(final JavaPlugin plugin, final ConfigManager config) {
         this.plugin = plugin;
         this.config = config;
         this.playerStamina = new ConcurrentHashMap<>();
         this.lastUsedTime = new ConcurrentHashMap<>();
+        this.lastWarningTime = new ConcurrentHashMap<>();
+        this.previousState = new ConcurrentHashMap<>();
 
         this.maxStamina = config.getInt("stamina.max", 100);
         this.regenRate = config.getInt("stamina.regen-rate", 1);
@@ -151,6 +156,8 @@ public final class StaminaManager {
     public void removePlayer(final UUID playerId) {
         playerStamina.remove(playerId);
         lastUsedTime.remove(playerId);
+        lastWarningTime.remove(playerId);
+        previousState.remove(playerId);
     }
 
     /**
@@ -224,18 +231,33 @@ public final class StaminaManager {
         }
         playerStamina.clear();
         lastUsedTime.clear();
+        lastWarningTime.clear();
+        previousState.clear();
     }
 
     /**
      * Check and send warning if stamina is low.
+     * Only sends message on state change or after cooldown to prevent spam.
      */
     private void checkWarning(final Player player) {
-        if (isExhausted(player)) {
+        final UUID playerId = player.getUniqueId();
+        final StaminaState.State currentState = getState(player);
+        final StaminaState.State prevState = previousState.get(playerId);
+        final long now = System.currentTimeMillis();
+        final Long lastWarning = lastWarningTime.get(playerId);
+
+        // Check if state changed from non-exhausted to exhausted
+        if (currentState == StaminaState.State.EXHAUSTED && prevState != StaminaState.State.EXHAUSTED) {
             TextUtil.actionBar(player, config.getString("messages.prefix", "") + config.getString("messages.exhausted", "Exhausted!"));
-        } else if (hasLowStamina(player)) {
+            lastWarningTime.put(playerId, now);
+        } else if (currentState == StaminaState.State.LOW && prevState != StaminaState.State.LOW && prevState != StaminaState.State.EXHAUSTED) {
+            // State changed to LOW
             final String msg = config.getString("messages.low-stamina", "Warning: Low stamina")
                     .replace("%stamina%", String.valueOf(getStamina(player)));
             TextUtil.actionBar(player, msg);
+            lastWarningTime.put(playerId, now);
         }
+
+        previousState.put(playerId, currentState);
     }
 }

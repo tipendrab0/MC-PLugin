@@ -98,7 +98,7 @@ public final class MHAPlugin extends JavaPlugin implements CommandExecutor, TabC
     public Economy getEconomy() { return econ; }
 
     private void registerListeners() {
-        registerListener(new PlayerQuitListener(this));
+        registerListener(new PlayerQuitListener(this, staminaManager));
         registerListener(new QuirkActivationListener(quirkManager, staminaManager, configManager));
         registerListener(new QuirkPassiveListener(this, quirkManager));
         registerListener(new PlayerJoinListener(this, quirkManager, staminaManager, configManager, quirkAwakener));

@@ -28,6 +28,10 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -56,6 +60,17 @@
             <artifactId>junit-jupiter</artifactId>
             <version>5.11.4</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- LibsDisguises - Optional dependency for model transformation -->
+        <!-- Install LibsDisguises plugin on your server to enable full transformation -->
+        <dependency>
+            <groupId>LibsDisguises</groupId>
+            <artifactId>LibsDisguises</artifactId>
+            <version>10.0.44</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/libs/LibsDisguises-10.0.44.jar</systemPath>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
