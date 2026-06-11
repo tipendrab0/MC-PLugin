@@ -108,7 +108,15 @@ public final class QuirkAwakener {
 
             @Override
             public void run() {
-                if (!player.isOnline() || ticks++ > CEREMONY_DURATION) {
+                if (!player.isOnline()) {
+                    // Player left mid-ceremony: abort without assigning so they can
+                    // re-awaken (and actually see the ceremony) on their next join.
+                    quirkManager.setAwakeningInProgress(player.getUniqueId(), false);
+                    activeCeremonies.remove(player.getUniqueId());
+                    cancel();
+                    return;
+                }
+                if (ticks++ > CEREMONY_DURATION) {
                     finishCeremony();
                     cancel();
                     return;
@@ -130,7 +138,9 @@ public final class QuirkAwakener {
 
             private void finishCeremony() {
                 quirkManager.setAwakeningInProgress(player.getUniqueId(), false);
-                quirkManager.assignQuirk(player, quirkType);
+                // Assign silently: the ceremony below already reveals the Quirk in chat,
+                // so the default assignQuirk announcement would duplicate it.
+                quirkManager.assignQuirk(player, quirkType, false);
                 markAwakened(player.getUniqueId());
                 activeCeremonies.remove(player.getUniqueId());
 

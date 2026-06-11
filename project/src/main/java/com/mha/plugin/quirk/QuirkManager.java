@@ -140,9 +140,20 @@ public final class QuirkManager {
     }
 
     /**
-     * Assign a Quirk to a player.
+     * Assign a Quirk to a player, announcing it in chat.
      */
     public QuirkType assignQuirk(final Player player, final QuirkType type) {
+        return assignQuirk(player, type, true);
+    }
+
+    /**
+     * Assign a Quirk to a player.
+     *
+     * @param announce when {@code true}, send the chat announcement. The awakening
+     *                 ceremony already reveals the Quirk dramatically, so it assigns
+     *                 silently to avoid duplicate "you got the Quirk" chat messages.
+     */
+    public QuirkType assignQuirk(final Player player, final QuirkType type, final boolean announce) {
         if (type == QuirkType.NONE) {
             removeQuirk(player);
             return QuirkType.NONE;
@@ -161,10 +172,12 @@ public final class QuirkManager {
 
         quirk.onAssign(player);
 
-        // Send rarity-themed message
-        final String rarityColor = getRarityColor(type.getRarity());
-        player.sendMessage(rarityColor + "You have been assigned the " + type.getDisplayName() + " Quirk!");
-        player.sendMessage("§7Rarity: " + rarityColor + type.getRarity().getDisplayName() + " §7- " + type.getRarity().getDescription());
+        if (announce) {
+            // Send rarity-themed message
+            final String rarityColor = getRarityColor(type.getRarity());
+            player.sendMessage(rarityColor + "You have been assigned the " + type.getDisplayName() + " Quirk!");
+            player.sendMessage("§7Rarity: " + rarityColor + type.getRarity().getDisplayName() + " §7- " + type.getRarity().getDescription());
+        }
 
         return type;
     }
