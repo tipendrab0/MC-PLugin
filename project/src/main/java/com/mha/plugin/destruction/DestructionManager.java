@@ -1,7 +1,9 @@
 package com.mha.plugin.destruction;
 
 import com.mha.plugin.util.ConfigManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -12,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Tracks environmental destruction from Quirks and restores blocks over time.
+ * Uses both session-based and global tracking for reliability.
  */
 public final class DestructionManager {
 
@@ -20,6 +23,7 @@ public final class DestructionManager {
     private final Map<UUID, DestructionSession> sessionsById;
     private final Map<UUID, UUID> activeSessionByPlayer;
     private final Set<String> protectedLocations;
+    private final List<BlockSnapshot> globalSnapshots;
     private BukkitRunnable restoreTask;
 
     public DestructionManager(final JavaPlugin plugin, final ConfigManager config) {
@@ -28,6 +32,7 @@ public final class DestructionManager {
         this.sessionsById = new ConcurrentHashMap<>();
         this.activeSessionByPlayer = new ConcurrentHashMap<>();
         this.protectedLocations = ConcurrentHashMap.newKeySet();
+        this.globalSnapshots = Collections.synchronizedList(new ArrayList<>());
 
         startRestoreTask();
     }
@@ -55,16 +60,28 @@ public final class DestructionManager {
     }
 
     /**
-     * Record a block before it is changed during an active session.
+     * Record a block before it is changed.
+     * Works both with active sessions (preferred) and globally (fallback).
      */
     public void recordBlockChange(final Player player, final Block block) {
         if (!isEnabled() || block == null || isProtected(block.getLocation())) {
             return;
         }
 
+        // Try to use active session first
         final DestructionSession session = getActiveSession(player);
         if (session != null) {
             session.recordBlock(block.getState());
+        } else {
+            // Fallback: Record globally for cleanup on crash
+            final BlockSnapshot snapshot = new BlockSnapshot(
+                    block.getWorld().getName(),
+                    block.getX(),
+                    block.getY(),
+                    block.getZ(),
+                    block.getBlockData().clone()
+            );
+            globalSnapshots.add(snapshot);
         }
     }
 
@@ -83,22 +100,44 @@ public final class DestructionManager {
             return;
         }
 
+        // Also add to global tracking for crash recovery
+        globalSnapshots.addAll(session.getSnapshots());
         scheduleRestore(session);
     }
 
     /**
-     * Immediately restore all pending destruction.
+     * Immediately restore all pending destruction (session-based and global).
      */
     public int restoreAll() {
         int restored = 0;
 
+        // Restore session-based
         for (final DestructionSession session : new ArrayList<>(sessionsById.values())) {
             restored += restoreSession(session);
             sessionsById.remove(session.getSessionId());
             activeSessionByPlayer.remove(session.getPlayerId());
         }
 
+        // Restore global snapshots
+        synchronized (globalSnapshots) {
+            for (final BlockSnapshot snapshot : new ArrayList<>(globalSnapshots)) {
+                try {
+                    snapshot.restore();
+                    restored++;
+                } catch (Exception ignored) {
+                }
+            }
+            globalSnapshots.clear();
+        }
+
         return restored;
+    }
+
+    /**
+     * Get count of pending restorations.
+     */
+    public int getPendingRestorationCount() {
+        return sessionsById.size() + globalSnapshots.size();
     }
 
     public boolean protectLocation(final Location location) {
@@ -134,6 +173,7 @@ public final class DestructionManager {
         restoreAll();
         sessionsById.clear();
         activeSessionByPlayer.clear();
+        globalSnapshots.clear();
     }
 
     private void scheduleRestore(final DestructionSession session) {
@@ -144,6 +184,8 @@ public final class DestructionManager {
             @Override
             public void run() {
                 restoreSession(session);
+                // Remove from global tracking after restoration
+                globalSnapshots.removeAll(session.getSnapshots());
             }
         }.runTaskLater(plugin, delayTicks);
     }
@@ -151,8 +193,11 @@ public final class DestructionManager {
     private int restoreSession(final DestructionSession session) {
         int restored = 0;
         for (final BlockSnapshot snapshot : session.getSnapshots()) {
-            snapshot.restore();
-            restored++;
+            try {
+                snapshot.restore();
+                restored++;
+            } catch (Exception ignored) {
+            }
         }
         return restored;
     }
@@ -166,10 +211,18 @@ public final class DestructionManager {
         restoreTask = new BukkitRunnable() {
             @Override
             public void run() {
-                // Periodic task reserved for gradual restoration if needed later.
+                // Periodic cleanup of invalid snapshots
+                synchronized (globalSnapshots) {
+                    globalSnapshots.removeIf(snapshot -> {
+                        final World world = Bukkit.getWorld(snapshot.getLocation().getWorld().getName());
+                        if (world == null) return false;
+                        final Location loc = snapshot.getLocation();
+                        return loc == null || loc.getBlock().getType().isAir();
+                    });
+                }
             }
         };
-        restoreTask.runTaskTimer(plugin, 20L, 20L);
+        restoreTask.runTaskTimer(plugin, 20L * 60, 20L * 60); // Check every minute
     }
 
     private static String locationKey(final Location location) {

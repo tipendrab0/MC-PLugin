@@ -130,16 +130,20 @@ public final class QuirkAwakener {
 
             private void finishCeremony() {
                 quirkManager.setAwakeningInProgress(player.getUniqueId(), false);
-                quirkManager.assignQuirk(player, quirkType);
+                quirkManager.assignQuirk(player, quirkType, true); // Silent - ceremony handles display
                 markAwakened(player.getUniqueId());
                 activeCeremonies.remove(player.getUniqueId());
 
-                // Final announcement
+                // Final announcement - SCREEN ONLY, no chat spam
                 final String quirkName = quirkType.getDisplayName();
                 final String rarityColor = getRarityColor(quirkType.getRarity());
                 final String rarityDisplay = quirkType.getRarity().getDisplayName();
 
-                player.sendTitle(rarityColor + "QUIRK AWAKENED!", "§f" + quirkName + " §7(" + rarityDisplay + "§7)", 20, 80, 20);
+                // Show on screen (title) instead of chat
+                player.sendTitle(rarityColor + "QUIRK AWAKENED!", "§f" + quirkName + " §7[" + rarityDisplay + "§7]", 20, 80, 20);
+
+                // Action bar for quick reference
+                player.sendActionBar(net.kyori.adventure.text.Component.text(rarityColor + quirkName + " §7- " + quirkType.getRarity().getDescription()));
 
                 // Massive final effect
                 player.getWorld().spawnParticle(Particle.FLASH, particleCenter.add(0, 1.5, 0), 10, 0, 0, 0, 0);
@@ -158,17 +162,10 @@ public final class QuirkAwakener {
                     player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 1.0f, 1.2f);
                 }
 
-                // Broadcast message
-                player.sendMessage("\n" + rarityColor + "§l★ QUIRK AWAKENED! ★");
-                player.sendMessage("§fYour Quirk has manifested: §b" + quirkName + " §7[" + rarityDisplay + "§7]");
-                player.sendMessage("§fRarity: " + rarityColor + quirkType.getRarity().getDescription());
-                player.sendMessage("§7Use §eLEFT CLICK §7to activate!");
-                player.sendMessage("§7Sneak + Right Click for §6Ultimate Move§7!\n");
-
-                // Broadcast to nearby players
+                // Broadcast to nearby players only (not the awakening player - they see the screen)
                 for (final org.bukkit.entity.Entity nearby : player.getNearbyEntities(30, 30, 30)) {
-                    if (nearby instanceof Player witness) {
-                        witness.sendMessage("§e" + player.getName() + " §fhas awakened their Quirk: " + rarityColor + quirkName + " §7[" + rarityDisplay + "§7]");
+                    if (nearby instanceof Player witness && !witness.equals(player)) {
+                        witness.sendActionBar(net.kyori.adventure.text.Component.text("§e" + player.getName() + " §fawakened: " + rarityColor + quirkName));
                     }
                 }
             }

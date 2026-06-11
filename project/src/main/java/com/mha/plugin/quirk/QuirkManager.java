@@ -136,13 +136,21 @@ public final class QuirkManager {
         if (chosen == QuirkType.NONE) {
             return QuirkType.NONE;
         }
-        return assignQuirk(player, chosen);
+        return assignQuirk(player, chosen, false);
+    }
+
+    /**
+     * Assign a Quirk to a player with messages.
+     */
+    public QuirkType assignQuirk(final Player player, final QuirkType type) {
+        return assignQuirk(player, type, false);
     }
 
     /**
      * Assign a Quirk to a player.
+     * @param silent If true, no chat messages (used by awakening ceremony which has its own display)
      */
-    public QuirkType assignQuirk(final Player player, final QuirkType type) {
+    public QuirkType assignQuirk(final Player player, final QuirkType type, final boolean silent) {
         if (type == QuirkType.NONE) {
             removeQuirk(player);
             return QuirkType.NONE;
@@ -161,10 +169,12 @@ public final class QuirkManager {
 
         quirk.onAssign(player);
 
-        // Send rarity-themed message
-        final String rarityColor = getRarityColor(type.getRarity());
-        player.sendMessage(rarityColor + "You have been assigned the " + type.getDisplayName() + " Quirk!");
-        player.sendMessage("§7Rarity: " + rarityColor + type.getRarity().getDisplayName() + " §7- " + type.getRarity().getDescription());
+        // Only send message if not silent (ceremony has its own display)
+        if (!silent) {
+            final String rarityColor = getRarityColor(type.getRarity());
+            player.sendTitle(rarityColor + "QUIRK ASSIGNED!", "§f" + type.getDisplayName(), 10, 40, 10);
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
+        }
 
         return type;
     }

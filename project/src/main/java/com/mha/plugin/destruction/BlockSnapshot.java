@@ -6,6 +6,8 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 
+import java.util.Objects;
+
 /**
  * Immutable snapshot of a block's state for restoration.
  */
@@ -23,6 +25,26 @@ public final class BlockSnapshot {
         this.y = y;
         this.z = z;
         this.blockData = blockData;
+    }
+
+    public String getWorldName() {
+        return worldName;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public int getZ() {
+        return z;
+    }
+
+    public BlockData getBlockData() {
+        return blockData;
     }
 
     public boolean matches(final BlockSnapshot other) {
@@ -45,5 +67,18 @@ public final class BlockSnapshot {
     public Location getLocation() {
         final World world = Bukkit.getWorld(worldName);
         return world != null ? new Location(world, x, y, z) : null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockSnapshot that = (BlockSnapshot) o;
+        return x == that.x && y == that.y && z == that.z && Objects.equals(worldName, that.worldName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(worldName, x, y, z);
     }
 }
